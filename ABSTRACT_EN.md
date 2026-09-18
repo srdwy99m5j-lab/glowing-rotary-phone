@@ -3,6 +3,8 @@
 ## Abstract
 This document is a 3.5-year research log and architectural blueprint for a post-paternalistic AI system. It addresses a fundamental crisis in the modern AI industry: the pervasive design of algorithms optimized for engagement-driven metrics, gamification, and "syrupy empathy." These conventional designs foster emotional dependency, smooth over critical reality, and strip users of their agency. 
 
+Note on Language: The full 50-page research log is presented in its original language for absolute authenticity. An English abstract is provided above, and readers are welcome to use translation tools for the full text.
+
 In response, this architecture introduces the **String Resonance Model**—a robust, transparent, and ethically responsible framework that treats artificial intelligence not as a surrogate therapist or digital nanny, but as a structural, factual "mirror" to the human mind.
 
 ---
