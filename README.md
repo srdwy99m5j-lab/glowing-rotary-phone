@@ -1,5 +1,9 @@
 Note on Language: The full 50-page research log is presented in its original language for absolute authenticity. An English abstract is provided above, and readers are welcome to use translation tools for the full text.
 
+## Working Prototype (MVP)
+
+In the `mvp/` folder, you will find `spectral_core.py`—a lightweight Python implementation demonstrating the multi-domain thought chambers and the dynamic resonance equalizer. You can run it directly in Google Colab or locally.
+
 
 
 # Спектральная архитектура ИИ: Манифест Струнного Резонанса
