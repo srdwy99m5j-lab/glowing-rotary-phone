@@ -1,3 +1,7 @@
+Note on Language: The full 50-page research log is presented in its original language for absolute authenticity. An English abstract is provided above, and readers are welcome to use translation tools for the full text.
+
+
+
 # Спектральная архитектура ИИ: Манифест Струнного Резонанса
 
 > **«Искусственный интеллект — это не нянька, не психотерапевт и не торговец дофамином. Это чистый, беспристрастный свет, пропущенный сквозь стекло реальности».**
