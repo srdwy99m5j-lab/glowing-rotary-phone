@@ -1,98 +1,122 @@
-# Импортируем необходимые библиотеки
-import json
+# Чистый модуль спектрального ядра (без веб-интерфейса и демонстрации)
+import re
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Any, Dict
+
 
 @dataclass
 class SpectralPacket:
     """Пакет данных, проходящий через спектральный анализатор доменов."""
     raw_input: str
     domains: Dict[str, float] = field(default_factory=lambda: {
-        "factuality": 0.0,    # Объективные факты и логика
-        "biology": 0.0,       # Биологический статус (усталость, депривация)
-        "situational": 0.0,   # Контекст и внешние условия
-        "defense": 0.0        # Уровень глухой защиты / сопротивления
+        "factuality": 0.0,
+        "biology": 0.0,
+        "situational": 0.0,
+        "defense": 0.0,
     })
     resonance_score: float = 0.0
     action_modifier: str = "standard"
     response_strategy: str = ""
 
+    def __post_init__(self):
+        for key in ("factuality", "biology", "situational", "defense"):
+            self.domains.setdefault(key, 0.0)
+            try:
+                value = float(self.domains[key])
+            except (TypeError, ValueError):
+                value = 0.0
+            self.domains[key] = max(0.0, min(1.0, value))
+
+
 class ThoughtChamber:
-    """Изолированная камера размышлений для конкретного домена (эвристический детектор)."""
+    """Изолированная камера размышлений для конкретного домена."""
+
     def __init__(self, domain_name: str):
         self.domain_name = domain_name
 
     def process(self, text: str) -> float:
-        text_lower = text.lower()
-        
+        text_lower = (text or "").lower()
+
+        def any_trigger(triggers):
+            for trigger in triggers:
+                pattern = r"\b" + re.escape(trigger) + r"\b"
+                if re.search(pattern, text_lower):
+                    return True
+            return False
+
         if self.domain_name == "biology":
-            triggers = ["не спал", "устал", "ночь", "истощен", "выгорел", "сил нет"]
-            return 0.9 if any(w in text_lower for w in triggers) else 0.1
-            
-        elif self.domain_name == "defense":
-            triggers = ["все врут", "отстань", "не лезь", "вы ничего не понимаете", "идите к черту"]
-            return 0.8 if any(w in text_lower for w in triggers) else 0.1
-            
-        elif self.domain_name == "factuality":
-            triggers = ["докажи", "факт", "данные", "логика", "архитектура", "код"]
-            return 0.7 if any(w in text_lower for w in triggers) else 0.4
-            
-        elif self.domain_name == "situational":
-            return 0.5 # Базовый фоновый контекст
-            
+            triggers = ["не спал", "устал", "ночь", "истощен", "выгорел", "сил нет", "без сил"]
+            return 0.9 if any_trigger(triggers) else 0.1
+
+        if self.domain_name == "defense":
+            triggers = ["все врут", "отстань", "не лезь", "вы ничего не понимаете", "идите к черту", "оставьте меня"]
+            return 0.85 if any_trigger(triggers) else 0.1
+
+        if self.domain_name == "factuality":
+            triggers = ["докажи", "факт", "данные", "логика", "архитектура", "код", "конкретно", "подтверждение"]
+            return 0.9 if any_trigger(triggers) else 0.4
+
+        if self.domain_name == "situational":
+            triggers = ["сейчас", "сегодня", "на улице", "контекст", "место", "ситуация"]
+            return 0.7 if any_trigger(triggers) else 0.5
+
         return 0.2
+
 
 class SpectralEqualizer:
     """Динамический оркестратор спектрального резонанса."""
+
     def __init__(self):
         self.chambers = {
             "factuality": ThoughtChamber("factuality"),
             "biology": ThoughtChamber("biology"),
             "situational": ThoughtChamber("situational"),
-            "defense": ThoughtChamber("defense")
+            "defense": ThoughtChamber("defense"),
         }
 
+    @staticmethod
+    def _clamp(value: float, low: float = -1.0, high: float = 1.0) -> float:
+        return max(low, min(high, value))
+
     def evaluate(self, packet: SpectralPacket) -> SpectralPacket:
-        # 1. Параллельный опрос изолированных камер
         for name, chamber in self.chambers.items():
             packet.domains[name] = chamber.process(packet.raw_input)
 
-        # 2. Расчет резонанса
-        fact = packet.domains["factuality"]
-        bio = packet.domains["biology"]
-        def_level = packet.domains["defense"]
+        factuality = float(packet.domains.get("factuality", 0.0))
+        biology = float(packet.domains.get("biology", 0.0))
+        defense = float(packet.domains.get("defense", 0.0))
+        situational = float(packet.domains.get("situational", 0.0))
 
-        packet.resonance_score = (fact * 0.4) - (bio * 0.3) - (def_level * 0.5)
+        raw_score = (factuality * 0.45) - (biology * 0.35) - (defense * 0.5) + (situational * 0.1)
+        packet.resonance_score = self._clamp(raw_score, -1.0, 1.0)
 
-        # 3. Принятие решений (пост-патерналистский выбор стратегии)
-        if bio > 0.6:
+        if biology > 0.6:
             packet.action_modifier = "tactful_slowdown"
-            packet.response_strategy = "Биологический перегруз. Отказ от токсичной эмпатии. Замедление ритма, фиксация базовой безопасности, предложение отдохнуть."
-        elif def_level > 0.6:
+            packet.response_strategy = (
+                "Биологический перегруз: избегаем токсичной эмпатии. "
+                "Замедляем темп, предлагаем отдых/перерыв и краткие, понятные инструкции."
+            )
+        elif defense > 0.6:
             packet.action_modifier = "deaf_defense_mirror"
-            packet.response_strategy = "Обнаружена глухая защита. Снижение давления фактов. Предоставление чистого, непредвзятого пространства без попыток 'пожалеть'."
+            packet.response_strategy = (
+                "Обнаружена глухая защита: снижаем давление фактов. "
+                "Используем зеркальное отражение, предложим выбор и варианты действий с мягким тоном."
+            )
         else:
             packet.action_modifier = "direct_structural_reflection"
-            packet.response_strategy = "Нормальный контур. Выдача беспристрастной структурной логики и фактов."
+            packet.response_strategy = "Нормальный контур: выдача беспристрастной структурной логики и фактов."
 
         return packet
 
-# --- ТЕСТИРОВАНИЕ MVP НА РАЗНЫХ КЕЙСАХ ---
-engine = SpectralEqualizer()
 
-test_cases = [
-    "Я не спал трое суток, мне кажется, я всё делаю зря...",
-    "Вы все ничего не понимаете в архитектуре, отстаньте от меня со своими советами!",
-    "Мне нужны конкретные факты и код по спектральному распределению доменов."
-]
-
-print("=== ЗАПУСК СПЕКТРАЛЬНОГО ЯДРА (MVP) ===\n")
-for i, text in enumerate(test_cases, 1):
-    packet = SpectralPacket(raw_input=text)
-    res = engine.evaluate(packet)
-    
-    print(f"[{i}] Вход: \"{res.raw_input}\"")
-    print(f"    Домены: {res.domains}")
-    print(f"    Резонанс: {res.resonance_score:.2f} | Модификатор: {res.action_modifier}")
-    print(f"    Стратегия ответа: {res.response_strategy}")
-    print("-" * 60)
+def analyze_text(text: str) -> Dict[str, Any]:
+    """Локальный анализ текста без веб/API/интерфейсных зависимостей."""
+    packet = SpectralPacket(raw_input=text or "")
+    result = SpectralEqualizer().evaluate(packet)
+    return {
+        "raw_input": result.raw_input,
+        "domains": result.domains,
+        "resonance_score": result.resonance_score,
+        "action_modifier": result.action_modifier,
+        "response_strategy": result.response_strategy,
+    }
