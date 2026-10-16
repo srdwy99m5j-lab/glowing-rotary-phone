@@ -1,12 +1,15 @@
-# Чистый модуль спектрального ядра (без веб-интерфейса и демонстрации)
+# Чистый модуль спектрального ядра — ввод без вывода (без CLI/веб/тестов)
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict
+from typing import Dict, Any
 
 
 @dataclass
 class SpectralPacket:
-    """Пакет данных, проходящий через спектральный анализатор доменов."""
+    """Пакет данных, проходящий через спектральный анализатор доменов.
+
+    Все значения доменов ограничены диапазоном [0.0, 1.0].
+    """
     raw_input: str
     domains: Dict[str, float] = field(default_factory=lambda: {
         "factuality": 0.0,
@@ -19,17 +22,17 @@ class SpectralPacket:
     response_strategy: str = ""
 
     def __post_init__(self):
-        for key in ("factuality", "biology", "situational", "defense"):
-            self.domains.setdefault(key, 0.0)
+        for k in ("factuality", "biology", "situational", "defense"):
+            self.domains.setdefault(k, 0.0)
             try:
-                value = float(self.domains[key])
+                v = float(self.domains[k])
             except (TypeError, ValueError):
-                value = 0.0
-            self.domains[key] = max(0.0, min(1.0, value))
+                v = 0.0
+            self.domains[k] = max(0.0, min(1.0, v))
 
 
 class ThoughtChamber:
-    """Изолированная камера размышлений для конкретного домена."""
+    """Изолированная камера размышлений для конкретного домена (эвристический детектор)."""
 
     def __init__(self, domain_name: str):
         self.domain_name = domain_name
@@ -79,6 +82,10 @@ class SpectralEqualizer:
         return max(low, min(high, value))
 
     def evaluate(self, packet: SpectralPacket) -> SpectralPacket:
+        """Заполнить packet.domains и вычислить resonance_score и стратегию.
+
+        Функция полностью автономна и не выполняет сетевых вызовов.
+        """
         for name, chamber in self.chambers.items():
             packet.domains[name] = chamber.process(packet.raw_input)
 
@@ -109,14 +116,14 @@ class SpectralEqualizer:
         return packet
 
 
-def analyze_text(text: str) -> Dict[str, Any]:
-    """Локальный анализ текста без веб/API/интерфейсных зависимостей."""
+def analyze_text(text: str) -> None:
+    """Обработка входного текста без возврата или внешней публикации результатов.
+
+    Функция выполняет локальный анализ и не возвращает значения и не выполняет
+    сетевых или логирующих действий. Используйте отдельный модуль, если
+    требуется экспорт/сериализация результатов.
+    """
     packet = SpectralPacket(raw_input=text or "")
-    result = SpectralEqualizer().evaluate(packet)
-    return {
-        "raw_input": result.raw_input,
-        "domains": result.domains,
-        "resonance_score": result.resonance_score,
-        "action_modifier": result.action_modifier,
-        "response_strategy": result.response_strategy,
-    }
+    # выполняем анализ локально и целенаправленно НЕ возвращаем результат
+    SpectralEqualizer().evaluate(packet)
+    return None
